@@ -42,8 +42,19 @@ typedef void (*soft_spi_clk_fn)(unsigned char level);
 */
 typedef void (*soft_spi_delay_fn)(unsigned us);
 
-/* SPI Mode definition */
-enum soft_spi_mode_t {
+/**
+ * @brief Generic waiting fn?
+*/
+typedef void (*soft_spi_waiting_fn)();
+
+/* SPI Device Mode definition */
+enum soft_spi_device_mode_t {
+    SOFT_SPI_MASTER = 0, 
+    SOFT_SPI_SLAVE
+};
+
+/* SPI Transmission Mode definition */
+enum soft_spi_transmission_mode_t {
     SOFT_SPI_MODE_0 = 0, 
     SOFT_SPI_MODE_1, 
     SOFT_SPI_MODE_2, 
@@ -65,7 +76,8 @@ struct soft_spi {
     soft_spi_mosi_fn mosi_fn;
     soft_spi_clk_fn clk_fn;
     soft_spi_delay_fn delay_us;
-    enum soft_spi_mode_t mode;
+    enum soft_spi_device_mode_t device_mode;
+    enum soft_spi_transmission_mode_t transmission_mode;
     enum soft_spi_bit_order_t bit_order;
     unsigned period_us;
 };
@@ -78,14 +90,20 @@ struct soft_spi {
  * @param[out] spi Pointer to an empty soft spi instance
  * @param[in] chip_select_pin_fn Chip Select pin control function
  * @param[in] miso_pin_fn MISO pin control function
+ * @param[in] mosi_pin_fn MOSI pin control function
+ * @param[in] clk_fn Clock pin control function
+ * @param[in] delay_fn Delay control function
+ * @param[in] half_period_us half period delay time in microseconds
+ * @param[in] device_mode Device mode as Master/Slave
+ * @param[in] transmission_mode Data transmission mode
  * 
 */
 void soft_spi_create(struct soft_spi *spi, soft_spi_cs_fn chip_select_pin_fn, soft_spi_miso_fn miso_pin_fn, 
                     soft_spi_mosi_fn mosi_pin_fn, soft_spi_clk_fn clk_fn, soft_spi_delay_fn delay_fn, 
-                    unsigned half_period_us, enum soft_spi_mode_t spi_mode);
+                    unsigned half_period_us, enum soft_spi_device_mode_t device_mode, enum soft_spi_transmission_mode_t transmission_mode);
 
 /**
- * @brief Do SPI data transfer
+ * @brief Do SPI data transfer as master device
  * 
  * @param[in] spi Soft SPI instance.
  * @param[out] buffer_in Incoming data from the SPI device.

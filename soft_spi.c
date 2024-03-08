@@ -2,34 +2,41 @@
 
 void soft_spi_create(struct soft_spi *spi, soft_spi_cs_fn chip_select_pin_fn, soft_spi_miso_fn miso_pin_fn, 
                     soft_spi_mosi_fn mosi_pin_fn, soft_spi_clk_fn clk_fn, soft_spi_delay_fn delay_fn, 
-                    unsigned half_period_us, enum soft_spi_mode_t spi_mode){
+                    unsigned half_period_us, enum soft_spi_device_mode_t device_mode, enum soft_spi_transmission_mode_t transmission_mode){
 
     spi->cs_fn = chip_select_pin_fn;
     spi->miso_fn = miso_pin_fn;
     spi->mosi_fn = mosi_pin_fn;
     spi->clk_fn = clk_fn;
     spi->delay_us = delay_fn;
-    spi->mode = spi_mode;
+    spi->device_mode = device_mode;
+    spi->transmission_mode = transmission_mode;
     spi->period_us = half_period_us;
 
     spi->cs_fn(1);
     
-    switch (spi->mode) {
-        case SOFT_SPI_MODE_0:
-        case SOFT_SPI_MODE_1:
-            spi->clk_fn(0);
-            break;
-        case SOFT_SPI_MODE_2:
-        case SOFT_SPI_MODE_3:
-            spi->clk_fn(1);
-            break;
+    if (device_mode == SOFT_SPI_MASTER) {
+        switch (spi->transmission_mode) {
+            case SOFT_SPI_MODE_0:
+            case SOFT_SPI_MODE_1:
+                spi->clk_fn(0);
+                break;
+            case SOFT_SPI_MODE_2:
+            case SOFT_SPI_MODE_3:
+                spi->clk_fn(1);
+                break;
+        }
     }
+}
+
+unsigned char soft_spi_transfer_byte_as_slave(struct soft_spi *spi, unsigned char data) {
+
+    
 
 }
 
-
 /**
- * @brief Transfer a byte to the spi device
+ * @brief Transfer a byte to the spi slave device. 
  * 
  * @param[in] spi Soft SPI instance
  * @param[in] data Data to transfer
@@ -42,8 +49,12 @@ static
 unsigned char soft_spi_transfer_byte(struct soft_spi *spi, unsigned char data) {
 
     unsigned char result = 0;
+
+    if (spi->device_mode == SOFT_SPI_SLAVE) {
+        return 0;
+    }
     
-    switch(spi->mode) {
+    switch(spi->transmission_mode) {
         case SOFT_SPI_MODE_0:
             for (unsigned char i = 0; i < 8; i++) {
                 if (spi->bit_order == SOFT_SPI_MSB_FIRST) {
